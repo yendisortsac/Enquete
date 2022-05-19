@@ -118,7 +118,9 @@ A saída exata irá variar dependendo do banco de dados que você está utilizan
 Os nomes das tabelas são gerados automaticamente combinando o nome da aplicação (polls) e o nome em minúsculas do modelo – question e choice. (Você pode alterar esse comportamento.)
 Chaves primárias (IDs) são adicionadas automaticamente. (Você também pode modificar isso.)
 Por convenção, o Django adiciona "_id" ao nome do campo de uma chave estrangeira. (Sim, você pode alterar isso, como quiser.)
+
 The foreign key relationship is made explicit by a FOREIGN KEY constraint. Don’t worry about the DEFERRABLE parts; it’s telling PostgreSQL to not enforce the foreign key until the end of the transaction.
+
 Isto é atrelado ao banco que você está usando, então a utilização de campos específicos do banco de dados como auto_increment (MySQL), serial (PostgreSQL), ou integer primary key (SQLite) é feita para você automaticamente. O mesmo ocorre com as aspas dos nomes de campos – e.g., usando aspas duplas ou aspas simples.
 The sqlmigrate command doesn’t actually run the migration on your database - instead, it prints it to the screen so that you can see what SQL Django thinks is required. It’s useful for checking what Django is going to do or if you have database administrators who require SQL scripts for changes.
 Se você tiver interesse, você pode rodar python manage.py check; Ele checa por problemas no seu projeto sem criar migrations ou tocar seu banco de dados.
@@ -126,5 +128,24 @@ Se você tiver interesse, você pode rodar python manage.py check; Ele checa por
 Agora rode o migrate novamente para criar essas tabelas dos modelos no seu banco de dados:
 
 python manage.py migrate
+
+
+Brincando com a API
+
+python manage.py shell
+>>> from polls.models import Question, Choice
+>>> Question.objects.all()
+
+Create a New Question
+
+Support for time zones is enabled in the default settings file, so
+# Django expects a datetime with tzinfo for pub_date. Use timezone.now()
+# instead of datetime.datetime.now() and it will do the right thing.
+
+>>> from django.utils import timezone
+>>> q = Question(question_text = "What's new?", pub_date = timezone_now() )
+>>> q.save()
+>>> q.id
+
 
 
