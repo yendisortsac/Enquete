@@ -1,1 +1,33 @@
 Roteiros do Projeto
+
+CRIANDO A APLICAÇÃO DE ENQUETES: POLLS
+python manage.py startapp polls
+
+ESCREVA SUA PRIMEIRA VIEW EM polls/views.py
+from django.http import HttpResponse
+
+def index(request):
+	return HttpResponse("Aqui vai um texto")
+	
+Criando arquivo polls/urls.py
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+	path('', viewa.index, name = 'index'),
+]
+
+O próximo passo é apontar na raiz da URLconf para o módulo polls.urls.
+No arquivo mysite/urls.py, adicione uma importação de django.urls.include 
+e insira um include() na lista urlpatterns, de forma que você tenha:
+
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('polls/', include('polls.urls')),
+    path('admin/', admin.site.urls),
+]
+
+
