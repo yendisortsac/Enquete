@@ -1,0 +1,6 @@
+Comandos Git
+
+git status
+git add .
+git commit -m "O que foi feito"
+git push origin main
