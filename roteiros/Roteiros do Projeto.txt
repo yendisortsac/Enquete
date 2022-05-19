@@ -31,3 +31,100 @@ urlpatterns = [
 ]
 
 
+CONFIGURAÇÃO DO BANCO DE DADOS
+
+Para bancos de dados que não o SQLite
+
+Caso use um banco de dados que não seja o SQLite, tenha certeza que o banco de dados foi criado até este ponto.
+Faça isso com “CREATE DATABASE database_name;” dentro do prompt interativo do seu banco de dados.
+Também se certifique que o “database user” indicado em mysite/settings.py tenha a permissão “create database”.
+Isso permite a criação automática de test database o qual será necessário e um tutorial mais adiante.
+Se você está utilizando SQLite você não precisa criar nada de antemão - o arquivo do banco de dados será criado automaticamente quando ele for necessário.
+
+Atualizando o BANCO de DADOS
+
+python manage.py migrate
+
+Criando Modelos ( layout do Banco de Dados )
+
+Vamos editar polls/models.py
+
+from django.db import models
+
+
+class Question(models.Model):
+    question_text = models.CharField(max_length=200)
+    pub_date = models.DateTimeField('date published')
+
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    choice_text = models.CharField(max_length=200)
+    votes = models.IntegerField(default=0)
+	
+Aqui, cada modelo é representado por uma classe derivada da classe django.db.models.Model.
+Cada modelo possui alguns atributos de classe, as quais por sua vez representa um campo do banco de dados no modelo.
+
+Cada campo é representado por uma instância de uma classe Field – por exemplo, CharField para campos do tipo caractere e DateTimeField para data/hora. Isto diz ao Django qual tipo de dado cada campo contém.
+
+O nome de cada instância Field (por exemplo question_text ou pub_date) é o nome do campo, em formato amigável para a máquina. Você irá usar este valor no seu código Python, e seu banco de dados irá usá-lo como nome de coluna.
+
+Você pode usar um argumento opcional na primeira posição de um Field para designar um nome legível para seres humanos o qual será usado em uma série de partes introspectivas do Django, e também servirá como documentação. Se esse argumento não for fornecido, o Django utilizará o nome legível para máquina. Neste exemplo nós definimos um nome legível para humanos apenas para Question.pub_date. Para todos os outros campos neste modelo, o nome legível para máquina será utilizado como nome legível para humanos.
+
+Algumas classes de Field possuem elementos obrigatórios. O CharField, por exemplo, requer que você informe a ele um max_length que é usado não apenas no esquema do banco de dados, mas na validação, como nós veremos em breve.
+
+Um Field pode ter vários argumentos opcionais; neste caso, definimos o valor default de votes para 0.
+
+Finalmente, note que uma relação foi criada, usando ForeignKey. Isso diz ao Django que cada Choice está relacionada a uma única Question. O Django oferece suporte para todos os relacionamentos comuns de um banco de dados: muitos-para-um, muitos-para-muitos e um-para-um.
+
+Agora o Django sabe que deve incluir a aplicação polls. Vamos rodar outro comando:
+python manage.py makemigrations polls
+
+Existe um comando que vai rodar as migrações para você e gerenciar o esquema do banco de dados automaticamente - que é chamado migrate, e nós vamos chegar a ele em um momento - mas primeiro vamos ver qual SQL está migração vai rodar. O comando sqlmigrate recebe o nome da migração e o seu SQL.
+python manage.py sqlmigrate polls 0001
+
+Você deve ver algo semelhante ao seguinte:
+
+BEGIN;
+--
+-- Create model Question
+--
+CREATE TABLE "polls_question" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "question_text" varchar(200) NOT NULL,
+    "pub_date" timestamp with time zone NOT NULL
+);
+--
+-- Create model Choice
+--
+CREATE TABLE "polls_choice" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "choice_text" varchar(200) NOT NULL,
+    "votes" integer NOT NULL,
+    "question_id" integer NOT NULL
+);
+ALTER TABLE "polls_choice"
+  ADD CONSTRAINT "polls_choice_question_id_c5b4b260_fk_polls_question_id"
+    FOREIGN KEY ("question_id")
+    REFERENCES "polls_question" ("id")
+    DEFERRABLE INITIALLY DEFERRED;
+CREATE INDEX "polls_choice_question_id_c5b4b260" ON "polls_choice" ("question_id");
+
+COMMIT;
+
+Note o seguinte:
+
+A saída exata irá variar dependendo do banco de dados que você está utilizando.
+Os nomes das tabelas são gerados automaticamente combinando o nome da aplicação (polls) e o nome em minúsculas do modelo – question e choice. (Você pode alterar esse comportamento.)
+Chaves primárias (IDs) são adicionadas automaticamente. (Você também pode modificar isso.)
+Por convenção, o Django adiciona "_id" ao nome do campo de uma chave estrangeira. (Sim, você pode alterar isso, como quiser.)
+The foreign key relationship is made explicit by a FOREIGN KEY constraint. Don’t worry about the DEFERRABLE parts; it’s telling PostgreSQL to not enforce the foreign key until the end of the transaction.
+Isto é atrelado ao banco que você está usando, então a utilização de campos específicos do banco de dados como auto_increment (MySQL), serial (PostgreSQL), ou integer primary key (SQLite) é feita para você automaticamente. O mesmo ocorre com as aspas dos nomes de campos – e.g., usando aspas duplas ou aspas simples.
+The sqlmigrate command doesn’t actually run the migration on your database - instead, it prints it to the screen so that you can see what SQL Django thinks is required. It’s useful for checking what Django is going to do or if you have database administrators who require SQL scripts for changes.
+Se você tiver interesse, você pode rodar python manage.py check; Ele checa por problemas no seu projeto sem criar migrations ou tocar seu banco de dados.
+
+Agora rode o migrate novamente para criar essas tabelas dos modelos no seu banco de dados:
+
+python manage.py migrate
+
+
